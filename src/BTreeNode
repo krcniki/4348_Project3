@@ -1,0 +1,70 @@
+public class BTreeNode {
+    // Constants for the B-tree
+    public static final int MAX_KEYS = 19; // Max number of key-value pairs per node
+    public static final int MAX_CHILDREN = 20; // Max number of children (1 more than MAX_KEYS)
+
+    long[] keys = new long[MAX_KEYS]; // Array to hold keys
+    long[] values = new long[MAX_KEYS]; // Array to hold values
+    long[] children = new long[MAX_CHILDREN]; // Array to hold child pointers (block IDs)
+    int numKeys = 0; // Current number of keys in the node
+    long nodeId; // ID of the node in the file
+    long parentId; // ID of the parent node
+    boolean isLeaf; // Flag to check if it's a leaf node
+
+    // Constructor for a new node
+    public BTreeNode(long nodeId, long parentId, boolean isLeaf) {
+        this.nodeId = nodeId;
+        this.parentId = parentId;
+        this.isLeaf = isLeaf;
+    }
+
+    // Method to check if the node is full
+    public boolean isFull() {
+        return numKeys == MAX_KEYS;
+    }
+
+    // Method to insert a key-value pair into the node (must be sorted)
+    public void insertKeyValue(long key, long value) {
+        int pos = 0;
+        // Find the position to insert the key
+        while (pos < numKeys && keys[pos] < key) {
+            pos++;
+        }
+
+        // Shift keys and values to the right to make space
+        for (int i = numKeys; i > pos; i--) {
+            keys[i] = keys[i - 1];
+            values[i] = values[i - 1];
+        }
+
+        // Insert the new key and value at the correct position
+        keys[pos] = key;
+        values[pos] = value;
+        numKeys++;
+    }
+
+    // Method to split a node
+    public BTreeNode splitNode(long nextNodeId) {
+        // Create a new node to split into
+        BTreeNode newNode = new BTreeNode(nextNodeId, parentId, isLeaf);
+        
+        // Move half of the keys and children to the new node
+        int mid = numKeys / 2;
+        newNode.numKeys = numKeys - mid - 1;
+
+        for (int i = 0; i < newNode.numKeys; i++) {
+            newNode.keys[i] = keys[mid + 1 + i];
+            newNode.values[i] = values[mid + 1 + i];
+            newNode.children[i] = children[mid + 1 + i];
+        }
+
+        // Update the parent pointer
+        for (int i = 0; i < newNode.numKeys + 1; i++) {
+            children[mid + 1 + i] = 0;
+        }
+
+        numKeys = mid;
+
+        return newNode; // Return the new split node
+    }
+}
