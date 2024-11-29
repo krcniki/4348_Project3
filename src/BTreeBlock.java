@@ -1,53 +1,54 @@
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+// Class representing a block in the B-Tree
 public class BTreeBlock {
-    private byte[] blockData;
-    private ArrayList<Long> keys;
-    private ArrayList<String> values;
-    
+    public byte[] blockData; // Raw data of the block (not used directly in this example)
+    private ArrayList<Long> keys; // List of keys in the block
+    private ArrayList<String> values; // List of corresponding values
+
+    // Constructor to initialize a block with raw data
     public BTreeBlock(byte[] blockData) {
         this.blockData = blockData;
-        this.keys = new ArrayList<>();
-        this.values = new ArrayList<>();
-        // Initialize keys and values from blockData
+        this.keys = new ArrayList<>(); // Initialize the keys list
+        this.values = new ArrayList<>(); // Initialize the values list
+        // Initialization from blockData would typically parse and populate keys and values
     }
 
     // Method to insert a key-value pair into the block
     public void insertKey(long key, String value) {
-        int index = findInsertIndex(key);
-        keys.add(index, key);
-        values.add(index, value);
+        int index = findInsertIndex(key); // Find the correct position for the key
+        keys.add(index, key); // Insert the key at the calculated index
+        values.add(index, value); // Insert the corresponding value at the same index
     }
 
-    // Method to check if the block is full (max 3 keys per block in this case)
+    // Method to check if the block is full
     public boolean isFull() {
-        return keys.size() >= 3;  // Assuming each block can hold 3 keys max
+        return keys.size() >= 3; // Assuming a maximum of 3 keys per block
     }
 
-    // Method to find the correct index to insert the key
+    // Private helper method to find the correct index to insert the key
     private int findInsertIndex(long key) {
         int low = 0, high = keys.size() - 1;
-        while (low <= high) {
+        while (low <= high) { // Binary search to find the correct position
             int mid = (low + high) / 2;
             if (keys.get(mid) < key) {
-                low = mid + 1;
+                low = mid + 1; // Narrow search to the upper half
             } else if (keys.get(mid) > key) {
-                high = mid - 1;
+                high = mid - 1; // Narrow search to the lower half
             } else {
-                return mid;  // Key already exists, insert at this index
+                return mid; // Key already exists; return the current index
             }
         }
-        return low;
+        return low; // Return the position where the key should be inserted
     }
 
-    // Method to check if the block is a leaf node (for simplicity, assume true here)
+    // Method to check if the block is a leaf node
     public boolean isLeaf() {
-        return true;  // Simplification: Assume all blocks are leaf nodes for now
+        return true; // Simplification: Assume all blocks are leaf nodes for now
     }
 
-    // Get child block ID for internal nodes (not needed for this block, so return 0)
+    // Method to get the child block ID for internal nodes (not used in this implementation)
     public long getChildBlockID(long key) {
-        return 0;  // Placeholder for actual child block retrieval logic
+        return 0; // Placeholder for actual child block retrieval logic
     }
 }
