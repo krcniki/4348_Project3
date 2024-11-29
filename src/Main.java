@@ -1,60 +1,97 @@
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
-import java.util.Scanner;
+
+import java.io.*;
 
 public class Main {
+    private static void printMenu() {
+        System.out.println("Commands:");
+        System.out.println("create - Create a new index file");
+        System.out.println("open   - Open an existing index file");
+        System.out.println("insert - Insert a key/value pair into the index");
+        System.out.println("search - Search for a key in the index");
+        System.out.println("load   - Load key/value pairs from a file");
+        System.out.println("print  - Print all key/value pairs in the index");
+        System.out.println("extract - Extract all key/value pairs to a file");
+        System.out.println("quit   - Exit the program");
+    }
+
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        String command;
-        boolean fileOpened = false;
-        BTree bTree = null;  // Reference to the BTree instance
-        
-        System.out.println("Welcome to the Index File Manager!");
+        BTree currentBTree = null;
 
-        while (true) {
-            System.out.println("\nCommands:");
-            System.out.println("create  - Create a new index file");
-            System.out.println("open    - Open an existing index file");
-            System.out.println("insert  - Insert a key-value pair into the index file");
-            System.out.println("quit    - Exit the program");
-            System.out.print("Enter command: ");
-            
-            command = scanner.nextLine().toLowerCase();
-            
-            if (command.equals("create")) {
-                System.out.print("Enter the file name to create: ");
-                String fileName = scanner.nextLine();
-                FileHandler.createFile(fileName);
-                fileOpened = false;  // After create, no file is open
-                bTree = null;  // No tree is loaded
-            } else if (command.equals("open")) {
-                System.out.print("Enter the file name to open: ");
-                String fileName = scanner.nextLine();
-                if (FileHandler.openFile(fileName)) {
-                    try {
-                        bTree = new BTree(new RandomAccessFile(fileName, "rw"));
-                        fileOpened = true;
-                    } catch (FileNotFoundException e) {
-                        System.out.println("Error: File not found. Please check the file path.");
-                    } catch (Exception e) {
-                        System.out.println("Error opening file: " + e.getMessage());
-                    }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+            while (true) {
+                printMenu();
+                System.out.print("Enter command: ");
+                String command = reader.readLine().trim().toLowerCase();
+
+                switch (command) {
+                    case "create":
+                        System.out.print("Enter filename: ");
+                        String createFileName = reader.readLine();
+                        if (FileManager.createIndexFile(createFileName)) {
+                            currentBTree = new BTree(Constants.MIN_DEGREE);
+                        }
+                        break;
+                    case "open":
+                        System.out.print("Enter filename: ");
+                        String openFileName = reader.readLine();
+                        if (FileManager.openIndexFile(openFileName)) {
+                            currentBTree = new BTree(Constants.MIN_DEGREE);
+                        }
+                        break;
+                    case "insert":
+                        if (currentBTree != null) {
+                            System.out.print("Enter key: ");
+                            int key = Integer.parseInt(reader.readLine());
+                            System.out.print("Enter value: ");
+                            int value = Integer.parseInt(reader.readLine());
+                            currentBTree.insert(key, value);
+                        } else {
+                            System.out.println("No index file is open.");
+                        }
+                        break;
+                    case "search":
+                        if (currentBTree != null) {
+                            System.out.print("Enter key: ");
+                            int searchKey = Integer.parseInt(reader.readLine());
+                            currentBTree.search(searchKey);
+                        } else {
+                            System.out.println("No index file is open.");
+                        }
+                        break;
+                    case "load":
+                        if (currentBTree != null) {
+                            System.out.print("Enter filename to load: ");
+                            String loadFileName = reader.readLine();
+                            currentBTree.loadFromFile(loadFileName);
+                        } else {
+                            System.out.println("No index file is open.");
+                        }
+                        break;
+                    case "print":
+                        if (currentBTree != null) {
+                            currentBTree.printTree();
+                        } else {
+                            System.out.println("No index file is open.");
+                        }
+                        break;
+                    case "extract":
+                        if (currentBTree != null) {
+                            System.out.print("Enter filename to extract to: ");
+                            String extractFileName = reader.readLine();
+                            currentBTree.extractToFile(extractFileName);
+                        } else {
+                            System.out.println("No index file is open.");
+                        }
+                        break;
+                    case "quit":
+                        System.out.println("Program exited.");
+                        return;
+                    default:
+                        System.out.println("Invalid command.");
                 }
-            } else if (command.equals("insert") && fileOpened) {
-                System.out.print("Enter key to insert: ");
-                long key = Long.parseLong(scanner.nextLine());
-                System.out.print("Enter value to insert: ");
-                String value = scanner.nextLine();
-                bTree.insertKey(key, value);
-                System.out.println("Key-value pair inserted.");
-            } else if (command.equals("quit")) {
-                System.out.println("Exiting...");
-                break;
-            } else {
-                System.out.println("Unknown command or no file opened. Please try again.");
             }
+        } catch (IOException e) {
+            System.out.println("Error reading input: " + e.getMessage());
         }
-
-        scanner.close();
     }
 }
